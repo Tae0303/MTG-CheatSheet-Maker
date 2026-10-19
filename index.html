@@ -76,7 +76,8 @@
   input[type=text] { font-family: var(--f-ui); font-size: 14px; }
   #deck { height: 220px; resize: vertical; }
   .seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-  .seg label { flex: 1; text-align: center; padding: 7px 4px; cursor: pointer; font-size: 13px; }
+  .seg label { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 7px 4px; cursor: pointer; font-size: 13px; }
+  .seg.fit label { flex: 1 1 auto; white-space: nowrap; padding-inline: 6px; }
   .seg input { position: absolute; opacity: 0; pointer-events: none; }
   .seg label:has(input:checked) { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
@@ -298,7 +299,7 @@
 
     <div class="field">
       <span class="h">Layout</span>
-      <div class="seg">
+      <div class="seg fit">
         <label><input type="radio" name="mode" id="mode-cards" value="cards">Cards</label>
         <label><input type="radio" name="mode" id="mode-acc" value="accordion" checked>Accordion</label>
         <label><input type="radio" name="mode" id="mode-book" value="booklet">Mini booklet</label>
@@ -1028,8 +1029,8 @@ function impose(pages, mode, paper) {
   const [L, S] = PAPER[paper];
   const pageStyle = $('#page-style');
   if (mode === 'image') {
-    // Close to square, so it fits a screen before zooming in.
-    const cols = Math.ceil(Math.sqrt(pages.length)), rows = Math.ceil(pages.length / cols);
+    // Two cards across, so on a phone each card is half the screen wide.
+    const cols = Math.min(2, pages.length), rows = Math.ceil(pages.length / cols);
     const w = cols * 63 + (cols - 1) * 3 + 12, h = rows * 88 + (rows - 1) * 3 + 12;
     pageStyle.textContent = `@page { size: ${w}mm ${h}mm; margin: 0; }`;
     const sh = sheetEl(w, h); sh.classList.add('imgsheet');
@@ -1258,7 +1259,10 @@ async function saveImage() {
       try {
         const img = await loadImage('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
         const canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
-        canvas.getContext('2d').drawImage(img, 0, 0, cw, ch);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, cw, ch);
+        // A canvas over the browser's size limit (phones have the lowest) can stay blank instead of failing.
+        if (ctx.getImageData(0, 0, 1, 1).data[3] === 0) throw new Error('blank');
         blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
       } catch { blob = null; }
       if (blob) break;

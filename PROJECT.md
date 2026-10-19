@@ -18,7 +18,7 @@ Deck Keyword Booklet is a single web page: paste a Magic: The Gathering decklist
   - **Cards:** separate cards, 3 × 3 per page, with grey cut lines.
   - **Accordion:** strips of 4 panels with striped glue tabs and fold ticks. Print one-sided, glue strips together, fold like a fan.
   - **Mini booklet:** saddle-stitch page order. Print double-sided (flip on long edge), fold, nest the sheets and staple. Blank Notes pages pad the count to a multiple of 4.
-  - **Image:** all cards in one high-resolution PNG (400 dpi) to view and zoom on a phone, tablet or computer. The Print button becomes **Save image**, and the Print sheets tab becomes **Full image**.
+  - **Image:** all cards in one high-resolution PNG (400 dpi), two cards across so they're big enough on a phone; zoom in to read. The Print button becomes **Save image**, and the Print sheets tab becomes **Full image**.
 - **Magic-card styling:**
   - black border; frame color from the commanders' colors (gold for multicolor)
   - name bar with real mana symbols; parchment text box
