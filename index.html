@@ -1,0 +1,1460 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deck Keyword Booklet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style id="page-style">@page { size: 297mm 210mm; margin: 0; }</style>
+<style>
+  /* Layout: control rail on the left, live preview of folded panels / print sheets on the right */
+  :root {
+    --bg: #e9e6df;
+    --surface: #fbfaf7;
+    --ink: #1f1b16;
+    --muted: #6a6257;
+    --line: #d4cec3;
+    --accent: #8a5a1e;
+    --accent-ink: #ffffff;
+    --warn: #a3361f;
+    --f-display: "Cinzel", "Trajan Pro", Georgia, serif;
+    --f-body: "Crimson Pro", Georgia, "Times New Roman", serif;
+    --f-ui: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    /* Printed card: always light, it goes on paper */
+    --frame: #d4b25c;
+    --bar: #f2e2a8;
+    --parch: #f4ecd9;
+    --parch-2: #eadfc6;
+    --card-ink: #1d1812;
+    --card-muted: #5d5245;
+    --pt: 6.8pt;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17140f; --surface: #221e18; --ink: #efe8dc; --muted: #a99f90; --line: #3a342b;
+      --accent: #d9a55a; --accent-ink: #1a140c; --warn: #f08a6c; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17140f; --surface: #221e18; --ink: #efe8dc; --muted: #a99f90; --line: #3a342b;
+    --accent: #d9a55a; --accent-ink: #1a140c; --warn: #f08a6c; color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: var(--f-ui); font-size: 14px;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+
+  /* ---------- App chrome ---------- */
+  .top {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    padding-block: 14px; padding-inline: 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .top h1 { margin: 0; font: 700 22px/1.1 var(--f-display); letter-spacing: .02em; }
+  .top p { margin: 0; color: var(--muted); font-size: 13px; }
+  .layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); min-height: calc(100vh - 60px); }
+  .rail {
+    border-right: 1px solid var(--line); background: var(--surface);
+    padding-block: 16px; padding-inline: 18px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .rail label.h, .rail .h { font-weight: 600; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  textarea, input[type=text] {
+    width: 100%; font: 13px/1.4 ui-monospace, Consolas, monospace;
+    background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px;
+  }
+  input[type=text] { font-family: var(--f-ui); font-size: 14px; }
+  #deck { height: 220px; resize: vertical; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg label { flex: 1; text-align: center; padding: 7px 4px; cursor: pointer; font-size: 13px; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg label:has(input:checked) { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .row input[type=range] { flex: 1; accent-color: var(--accent); }
+  button {
+    font: 600 14px var(--f-ui); cursor: pointer;
+    border-radius: 8px; padding: 10px 14px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink);
+  }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { opacity: .6; cursor: wait; }
+  #status { font-size: 13px; color: var(--muted); min-height: 1.2em; }
+  #status.err { color: var(--warn); }
+  #kwlist { display: flex; flex-direction: column; gap: 2px; max-height: 420px; overflow: auto; }
+  .kwrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 4px 2px; border-bottom: 1px dashed var(--line); }
+  .kwrow details summary { cursor: pointer; font-size: 13px; }
+  .kwrow textarea { margin-top: 6px; font-family: var(--f-ui); font-size: 12.5px; height: 70px; }
+  .kwrow .cnt { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kwrow.picker { grid-template-columns: auto minmax(0, 1fr) 118px auto; }
+  .kwrow select {
+    width: 100%; font: 12px var(--f-ui); padding: 3px 4px; border-radius: 5px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  }
+  .kwgroup { font: 700 13px var(--f-display); color: var(--accent); padding: 10px 2px 2px; border-bottom: 1px solid var(--line); }
+  #grouplist { display: flex; flex-direction: column; gap: 4px; }
+  .grow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 4px; align-items: center; margin: 0; }
+  #addgroup { grid-template-columns: minmax(0, 1fr) auto; }
+  .grow input[type=text] { padding: 5px 7px; font-size: 13px; }
+  button.mini { padding: 4px 8px; font-size: 13px; border-radius: 6px; min-width: 30px; }
+  button.mini.wide { padding: 5px 10px; }
+  button.mini:disabled { cursor: default; opacity: .35; }
+  .kwrow input { margin-top: 3px; accent-color: var(--accent); }
+
+  .main { min-width: 0; padding-block: 16px; padding-inline: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .tabs { display: flex; gap: 6px; }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .howto {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 16px; font-size: 13.5px; line-height: 1.5; max-width: 80ch;
+  }
+  .howto ol { margin: 6px 0 0; padding-left: 20px; }
+  .howto b { color: var(--accent); }
+  #flat { display: flex; flex-wrap: wrap; gap: 10px; }
+  #flat .panel { border-radius: 3mm; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+  #sheets { overflow-x: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
+  .sheet-cap { font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; margin-top: 10px; }
+  #measure { position: absolute; left: -10000px; top: 0; visibility: hidden; }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .rail { border-right: 0; border-bottom: 1px solid var(--line); }
+  }
+
+  /* ---------- The card panel: 63 x 88 mm, standard Magic card ---------- */
+  .panel {
+    width: 63mm; height: 88mm; flex: none;
+    background: #111; padding: 2.6mm 2.6mm 0;
+    display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+    font-family: var(--f-body); font-size: var(--pt); color: var(--card-ink);
+  }
+  .frame {
+    flex: 1; min-height: 0;
+    background: var(--frame);
+    background-image: linear-gradient(160deg, rgba(255,255,255,.28), rgba(255,255,255,0) 40%, rgba(0,0,0,.12));
+    border-radius: 1.4mm 1.4mm 0.6mm 0.6mm;
+    padding: 1.3mm 1.3mm 1.6mm;
+    display: flex; flex-direction: column; gap: 1mm;
+  }
+  .namebar, .typebar {
+    flex: none; display: flex; align-items: center; justify-content: space-between; gap: 1mm;
+    background: var(--bar);
+    background-image: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0) 60%, rgba(0,0,0,.08));
+    border: 0.3mm solid rgba(0,0,0,.6);
+    border-radius: 1.6mm / 2.2mm;
+    box-shadow: 0 0.3mm 0 rgba(0,0,0,.35);
+    padding: 0 1.4mm;
+  }
+  .namebar { height: 5.4mm; font: 700 7.4pt/1 var(--f-display); letter-spacing: .01em; }
+  .namebar .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .typebar { height: 4.4mm; font: 600 6pt/1 var(--f-display); }
+  .cost { display: flex; gap: 0.4mm; flex: none; }
+  .textbox {
+    flex: 1; min-height: 0; overflow: hidden;
+    background: var(--parch);
+    background-image: linear-gradient(180deg, rgba(255,255,255,.35), rgba(0,0,0,0) 30%), radial-gradient(ellipse at 50% 120%, var(--parch-2), transparent 70%);
+    border: 0.3mm solid rgba(0,0,0,.45);
+    border-radius: 0.5mm;
+    margin: 0 0.5mm;
+    padding: 1.3mm 1.7mm;
+    display: flex; flex-direction: column; gap: 1mm;
+  }
+  .kw { line-height: 1.16; }
+  .kw b { font-weight: 700; }
+  .kw i { color: #2c251c; }
+  .kw .n {
+    float: right; margin: 0 0 0 1mm;
+    font: 700 0.78em/1.25 var(--f-ui); color: #f4ecd9;
+    background: #3a3127; border-radius: 0.8mm; padding: 0 0.7mm;
+  }
+  .kw .cn { display: block; font-size: 0.82em; color: var(--card-muted); margin-top: 0.2mm; }
+  .sec {
+    font: 700 6.6pt/1 var(--f-display); letter-spacing: .04em; color: #3a2d1c;
+    padding-top: 0.6mm; display: flex; align-items: center; gap: 1.2mm;
+  }
+  .sec::after { content: ""; flex: 1; height: 0.25mm; background: linear-gradient(90deg, rgba(58,45,28,.7), rgba(58,45,28,0)); }
+  .collector {
+    flex: none; height: 3.4mm; display: flex; justify-content: space-between; align-items: center;
+    padding: 0 0.8mm; color: #e8e2d6; font: 4.6pt/1 var(--f-ui); letter-spacing: .03em;
+  }
+  .collector .cr { max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+
+  /* mana and tap symbols */
+  .ms {
+    display: inline-block; min-width: 1.18em; height: 1.18em; padding: 0 .12em;
+    border-radius: 0.6em; text-align: center; vertical-align: -0.12em;
+    font: 700 0.78em/1.5 var(--f-ui); color: #111;
+    background: #ccc2c0; box-shadow: -0.06em 0.08em 0 #111;
+  }
+  .ms.W { background: #f8f6d8; } .ms.U { background: #c1d7e9; } .ms.B { background: #bab1ab; }
+  .ms.R { background: #e49977; } .ms.G { background: #a3c095; } .ms.C, .ms.T, .ms.Q, .ms.E { background: #ccc2c0; }
+  .cost .ms { font-size: 6pt; }
+  .mi {
+    display: inline-block; width: 1.08em; height: 1.08em; vertical-align: -0.16em;
+    margin: 0 0.04em; border-radius: 50%;
+    filter: drop-shadow(-0.12mm 0.16mm 0 #111);
+  }
+  .cost .mi { width: 3.2mm; height: 3.2mm; vertical-align: middle; margin: 0; filter: drop-shadow(-0.2mm 0.25mm 0 #111); }
+
+  /* cover */
+  .art {
+    flex: 0 0 31mm; margin: 0 0.5mm;
+    border: 0.3mm solid rgba(0,0,0,.6);
+    background: var(--art, #555);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1mm;
+    color: #fff; text-align: center; position: relative; overflow: hidden;
+  }
+  .art::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 42%, rgba(255,255,255,.35), rgba(255,255,255,0) 55%),
+                repeating-conic-gradient(from 0deg at 50% 42%, rgba(255,255,255,.07) 0 6deg, rgba(255,255,255,0) 6deg 12deg);
+  }
+  .art.has-img { flex-basis: 37mm; background: #222; }
+  .art.has-img::before { display: none; }
+  .artimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
+  .art .big { position: relative; font: 700 13pt/1.05 var(--f-display); text-shadow: 0 0.4mm 1mm rgba(0,0,0,.6); padding: 0 2mm; text-wrap: balance; }
+  .art .small { position: relative; font: 600 5.6pt/1 var(--f-display); letter-spacing: .18em; text-transform: uppercase; opacity: .9; }
+  .setsym { width: 3.2mm; height: 3.2mm; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #f6d98a, #a77a1e); border: 0.2mm solid #000; flex: none; }
+  .cover .textbox { gap: 0.8mm; }
+  .cover .flavor { font-style: italic; color: #3b3227; border-top: 0.2mm solid rgba(0,0,0,.25); padding-top: 0.8mm; }
+  .ptbox {
+    position: absolute; right: 3.4mm; bottom: 2.3mm;
+    background: var(--bar); border: 0.3mm solid rgba(0,0,0,.65); border-radius: 1mm;
+    font: 700 7pt/1 var(--f-display); padding: 0.7mm 1.6mm; box-shadow: 0 0.3mm 0 rgba(0,0,0,.4);
+  }
+  .notes .textbox { background-image: repeating-linear-gradient(180deg, transparent 0 4.6mm, rgba(80,60,30,.28) 4.6mm 4.8mm); }
+
+  /* ---------- Print sheets ---------- */
+  .sheet {
+    background: #fff; position: relative; flex: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    color: #444; font-family: var(--f-ui);
+  }
+  .strip, .spread { display: flex; position: relative; outline: 0.25mm solid #9a9a9a; }
+  .cardgrid { display: grid; grid-template-columns: repeat(3, 63mm); }
+  .cardgrid .panel { outline: 0.25mm solid #9a9a9a; }
+  .tick { position: absolute; width: 0; border-left: 0.25mm solid #777; height: 3mm; }
+  .tick.top { top: -3.6mm; } .tick.bot { bottom: -3.6mm; }
+  .glue {
+    width: 8mm; height: 88mm; flex: none;
+    background: repeating-linear-gradient(45deg, #f2f2f2 0 1.4mm, #dcdcdc 1.4mm 2.8mm);
+    display: flex; align-items: center; justify-content: center;
+    writing-mode: vertical-rl; font: 600 6pt var(--f-ui); letter-spacing: .12em; color: #555;
+  }
+  .lbl { position: absolute; font-size: 6.5pt; color: #666; white-space: nowrap; }
+  .strip .lbl { top: -7.5mm; left: 0; }
+  .spread .lbl { left: -6mm; top: 0; writing-mode: vertical-rl; transform: rotate(180deg); }
+  /* Image layout: every card in one grid, saved as a PNG */
+  .sheet.imgsheet { display: grid; align-content: start; justify-content: start; gap: 3mm; padding: 6mm; background: #2b2620; }
+  .imgsheet .panel { border-radius: 3mm; }
+
+  @media print {
+    html, body { background: #fff !important; }
+    .top, .rail, .bar, .howto, #flat, .sheet-cap, #measure { display: none !important; }
+    .layout, .main { display: block !important; padding: 0 !important; margin: 0 !important; min-height: 0 !important; }
+    #sheets { display: block !important; overflow: visible !important; padding: 0 !important; }
+    .sheet { box-shadow: none !important; margin: 0 !important; break-after: page; page-break-after: always; }
+    .sheet:last-child { break-after: auto; page-break-after: auto; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    #flat .panel { transition: transform .15s ease; }
+    #flat .panel:hover { transform: translateY(-2px); }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Deck Keyword Booklet</h1>
+  <p>Paste a decklist. Get a cheat sheet of every keyword in it at standard card size (63 × 88 mm): separate cards, an accordion or a mini booklet.</p>
+</header>
+
+<div class="layout">
+  <aside class="rail">
+    <div class="field">
+      <label class="h" for="deck">Decklist</label>
+      <textarea id="deck" spellcheck="false"></textarea>
+      <span style="font-size:12px;color:var(--muted)">One card per line, like <code>1 Sol Ring</code>. Exports from Moxfield, Archidekt, MTG Arena and MTGO work. Put commanders under a <code>Commander</code> line.</span>
+    </div>
+    <div class="field">
+      <label class="h" for="deckname">Deck name</label>
+      <input type="text" id="deckname" placeholder="Uses your commanders' names if left blank">
+    </div>
+    <button class="primary" id="go">Make cheat sheet</button>
+    <div id="status" role="status"></div>
+
+    <div class="field">
+      <span class="h">Layout</span>
+      <div class="seg">
+        <label><input type="radio" name="mode" id="mode-cards" value="cards">Cards</label>
+        <label><input type="radio" name="mode" id="mode-acc" value="accordion" checked>Accordion</label>
+        <label><input type="radio" name="mode" id="mode-book" value="booklet">Mini booklet</label>
+        <label><input type="radio" name="mode" id="mode-img" value="image">Image</label>
+      </div>
+    </div>
+    <div class="field">
+      <span class="h">Order</span>
+      <div class="seg">
+        <label><input type="radio" name="order" id="order-group" value="group" checked>By group</label>
+        <label><input type="radio" name="order" id="order-az" value="az">A–Z</label>
+      </div>
+      <span style="font-size:12px;color:var(--muted)">A–Z keeps tokens and counters on their own cards.</span>
+    </div>
+    <div class="field" id="groupbox">
+      <span class="h">Groups</span>
+      <span style="font-size:12px;color:var(--muted)">Each group starts a new card, in this order. Rename, reorder or delete them, add your own, then pick a group for each keyword below.</span>
+      <div id="grouplist"></div>
+      <form id="addgroup" class="grow">
+        <input type="text" id="newgroup" placeholder="New group name" aria-label="New group name">
+        <button type="submit" class="mini wide">Add group</button>
+      </form>
+      <button type="button" id="resetgroups">Reset to default groups</button>
+    </div>
+    <div class="field" id="paperbox">
+      <span class="h">Paper</span>
+      <div class="seg">
+        <label><input type="radio" name="paper" id="paper-a4" value="a4" checked>A4</label>
+        <label><input type="radio" name="paper" id="paper-letter" value="letter">US Letter</label>
+      </div>
+    </div>
+    <div class="field">
+      <label class="h" for="size">Text size</label>
+      <div class="row"><input type="range" id="size" min="6" max="8.4" step="0.2" value="6.8"><span id="sizeval">6.8 pt</span></div>
+    </div>
+    <label class="row"><input type="checkbox" id="names"> List the cards under each keyword</label>
+
+    <div class="field">
+      <span class="h">Keywords found</span>
+      <span style="font-size:12px;color:var(--muted)">Untick to leave one out. Open one to edit its text.</span>
+      <div id="kwlist"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="bar">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-flat" aria-selected="true">Folded panels</button>
+        <button role="tab" id="tab-sheets" aria-selected="false">Print sheets</button>
+      </div>
+      <button class="primary" id="print">Print</button>
+    </div>
+    <div class="howto" id="howto"></div>
+    <div id="flat"></div>
+    <div id="sheets" hidden></div>
+  </main>
+</div>
+<div id="measure"></div>
+
+<script>
+/* =====================================================================
+   Keyword glossary. Short reminder text written for this tool.
+   cat: deck | cmd | cast | combat | perm | lib | tok
+   ===================================================================== */
+const CATS = [
+  ['deck', 'Deck Mechanics'], ['cmd', 'Commander & Multiplayer'], ['cast', 'Casting'],
+  ['combat', 'Combat'], ['perm', 'Creatures & Permanents'], ['lib', 'Library & Graveyard'], ['tok', 'Tokens'], ['ctr', 'Counters']
+];
+const G = [];
+function k(name, cat, text, o = {}) { G.push({ name, cat, text, ...o }); }
+
+// Combat
+k('Flying','combat','Can be blocked only by creatures with flying or reach.');
+k('Reach','combat','Can block creatures with flying.');
+k('Trample','combat','Assign lethal damage to its blockers; the rest can go to the player, planeswalker or battle it attacks.');
+k('Vigilance','combat',"Attacking doesn't cause it to tap.");
+k('Haste','combat','Can attack and use {T} abilities as soon as it comes under your control.');
+k('Menace','combat',"Can't be blocked except by two or more creatures.");
+k('First strike','combat','Deals combat damage before creatures without first strike.');
+k('Double strike','combat','Deals both first-strike and regular combat damage.');
+k('Deathtouch','combat','Any amount of damage it deals to a creature is enough to destroy it.');
+k('Lifelink','combat','Damage dealt by it also causes you to gain that much life.');
+k('Hexproof','combat',"Can't be the target of spells or abilities your opponents control.",{re:/hexproof(?! from)/i});
+k('Hexproof from','combat',"Your opponents can't target it with spells or abilities that have the named quality (for example, a color).");
+k('Shroud','combat',"Can't be the target of any spell or ability, including yours.");
+k('Indestructible','combat',"Damage and \"destroy\" effects don't destroy it. It can still be exiled, sacrificed or reduced to 0 toughness.");
+k('Defender','combat',"Can't attack.");
+k('Flash','combat','You may cast it any time you could cast an instant.');
+k('Ward','combat','Whenever it becomes the target of a spell or ability an opponent controls, counter that unless they pay the ward cost.');
+k('Protection','combat',"Protection from X: it can't be blocked, targeted, dealt damage, enchanted or equipped by anything X.",{re:/\bprotection from\b/i});
+k('Fear','combat','Can be blocked only by artifact creatures and/or black creatures.');
+k('Intimidate','combat','Can be blocked only by artifact creatures and/or creatures that share a color with it.');
+k('Skulk','combat',"Can't be blocked by creatures with greater power.");
+k('Shadow','combat','Can block or be blocked only by creatures with shadow.',{re:/(?<![\w'])shadow(?![\w'])(?! of)/i});
+k('Horsemanship','combat','Can be blocked only by creatures with horsemanship.');
+k('Landwalk','combat',"Can't be blocked as long as the defending player controls a land of the named type (Islandwalk, Forestwalk and so on).",{re:/\b(plains|island|swamp|mountain|forest|desert|legendary land|nonbasic land)walk\b/i});
+k('Flanking','combat','Whenever a creature without flanking blocks it, the blocker gets -1/-1 until end of turn.');
+k('Bushido','combat','Whenever it blocks or becomes blocked, it gets +N/+N until end of turn.');
+k('Rampage','combat','Whenever it becomes blocked, it gets +N/+N for each creature blocking it beyond the first.');
+k('Provoke','combat','When it attacks, you may have a creature the defending player controls untap and block it if able.');
+k('Afflict','combat','Whenever it becomes blocked, the defending player loses N life.');
+k('Annihilator','combat','Whenever it attacks, the defending player sacrifices N permanents.');
+k('Exalted','combat','Whenever a creature you control attacks alone, it gets +1/+1 until end of turn for each instance of exalted.');
+k('Battle cry','combat','Whenever it attacks, each other attacking creature gets +1/+0 until end of turn.');
+k('Prowess','combat','Whenever you cast a noncreature spell, it gets +1/+1 until end of turn.');
+k('Toxic','combat','Players dealt combat damage by it also get N poison counters.');
+k('Infect','combat','Deals damage to creatures as -1/-1 counters and to players as poison counters.');
+k('Wither','combat','Deals damage to creatures as -1/-1 counters.');
+k('Poisonous','combat','Whenever it deals combat damage to a player, that player gets N poison counters.');
+k('Enlist','combat',"As it attacks, you may tap a non-attacking creature you've had since your turn began to add its power to this one's.");
+k('Frenzy','combat',"Whenever it attacks and isn't blocked, it gets +N/+0 until end of turn.");
+k('Mentor','combat','Whenever it attacks, put a +1/+1 counter on target attacking creature with lower power.');
+k('Training','combat','Whenever it attacks with another creature with greater power, put a +1/+1 counter on it.');
+k('Mobilize','combat','Whenever it attacks, create N tapped and attacking 1/1 red Warrior tokens. Sacrifice them at the next end step.');
+k('Saddle','combat','Tap creatures with total power N or more: this Mount becomes saddled until end of turn. Sorcery speed.');
+k('Fight','combat','Each of the two creatures deals damage equal to its power to the other.',{act:true});
+k('Exert','combat',"You may exert it as it attacks. If you do, it won't untap during your next untap step.",{act:true});
+k('Decayed','combat',"Can't block. When it attacks, sacrifice it at end of combat.");
+k('Start your engines!','combat','You get speed 1 if you have none. Once on each of your turns when an opponent loses life, your speed goes up by 1 (max 4).');
+k('Max speed','combat','This ability works only while your speed is 4.');
+
+// Casting
+k('Cascade','cast','When you cast it, exile cards from the top of your library until you hit a nonland card with lower mana value. You may cast that card free. Put the rest on the bottom in a random order.');
+k('Discover','cast','Exile cards from the top until you hit a nonland card with mana value N or less. Cast it free or put it in your hand. The rest go on the bottom.',{act:true});
+k('Foretell','cast','During your turn, pay {2} and exile it from your hand face down. Cast it on a later turn for its foretell cost.');
+k('Rebound','cast','If you cast it from your hand, exile it as it resolves. At your next upkeep, you may cast it from exile free.');
+k('Suspend','cast','Pay the suspend cost and exile it with N time counters. Remove one at each of your upkeeps. When the last is removed, cast it free.');
+k('Flashback','cast','You may cast it from your graveyard for its flashback cost. Then exile it.');
+k('Retrace','cast','You may cast it from your graveyard by discarding a land card in addition to its other costs.');
+k('Jump-start','cast','You may cast it from your graveyard by discarding a card in addition to its other costs. Then exile it.');
+k('Escape','cast','You may cast it from your graveyard for its escape cost, which usually includes exiling other cards from your graveyard.');
+k('Demonstrate','cast','When you cast it, you may copy it. If you do, choose an opponent to also copy it.');
+k('Kicker','cast','You may pay an extra kicker cost as you cast it to get the kicked bonus.');
+k('Multikicker','cast','You may pay the kicker cost any number of times as you cast it.');
+k('Buyback','cast','You may pay the extra buyback cost. If you do, it returns to your hand as it resolves.');
+k('Convoke','cast','Your creatures can help cast it. Each creature you tap pays for {1} or one mana of its color.');
+k('Delve','cast','Each card you exile from your graveyard while casting it pays for {1}.');
+k('Improvise','cast','Each artifact you tap while casting it pays for {1}.');
+k('Affinity','cast','Costs {1} less to cast for each permanent of the named kind you control.');
+k('Emerge','cast',"Cast it by sacrificing a creature and paying the emerge cost minus that creature's mana value.");
+k('Evoke','cast','You may cast it for its evoke cost. If you do, it is sacrificed when it enters (its enters ability still happens).');
+k('Madness','cast','If you discard it, you may cast it for its madness cost instead of putting it into your graveyard.');
+k('Miracle','cast','If it is the first card you drew this turn, you may reveal it and cast it for its miracle cost.');
+k('Overload','cast','Cast it for its overload cost to change "target" in its text to "each".');
+k('Replicate','cast','As you cast it, pay the replicate cost any number of times. Copy it that many times.');
+k('Splice','cast',"As you cast a spell of the named type, you may reveal this from your hand and pay its splice cost to add its text to that spell.");
+k('Storm','cast','When you cast it, copy it for each other spell cast before it this turn.');
+k('Spectacle','cast','You may cast it for its spectacle cost if an opponent lost life this turn.');
+k('Surge','cast','You may cast it for its surge cost if you or a teammate cast another spell this turn.');
+k('Prowl','cast','You may cast it for its prowl cost if a creature of its type dealt combat damage to a player this turn.');
+k('Entwine','cast','Pay the entwine cost to choose all modes.');
+k('Escalate','cast','Pay the escalate cost for each mode you choose beyond the first.');
+k('Fuse','cast','You may cast both halves of this split card from your hand.');
+k('Aftermath','cast','Cast the second half only from your graveyard. Then exile it.');
+k('Casualty','cast','As you cast it, you may sacrifice a creature with power N or more. If you do, copy the spell.');
+k('Cleave','cast','Cast it for its cleave cost to remove the words in [brackets].');
+k('Bargain','cast','As you cast it, you may sacrifice an artifact, enchantment or token to get its bargained bonus.');
+k('Gift','cast','As you cast it, you may promise an opponent a gift. They get the gift, and you get the bonus.');
+k('Plot','cast','Pay the plot cost and exile it from your hand. Cast it free on a later turn at sorcery speed.');
+k('Freerunning','cast','You may cast it for its freerunning cost if an Assassin or commander of yours dealt combat damage to a player this turn.');
+k('Spree','cast',"Choose one or more modes and pay each chosen mode's extra cost.");
+k('Disturb','cast','You may cast it transformed from your graveyard for its disturb cost.');
+k('Dash','cast','Cast it for its dash cost: it gains haste and returns to your hand at the next end step.');
+k('Blitz','cast','Cast it for its blitz cost: it gains haste and "When this dies, draw a card." Sacrifice it at the next end step.');
+k('Mutate','cast','Cast it for its mutate cost on top of or under a non-Human creature you own. They merge into one creature with every ability.');
+k('Bestow','cast','Cast it as an Aura for its bestow cost. It becomes a creature again if the enchanted creature leaves.');
+k('Morph','cast','Cast it face down as a 2/2 creature for {3}. Turn it face up any time for its morph cost.');
+k('Megamorph','cast','Like morph, and it gets a +1/+1 counter when turned face up.');
+k('Disguise','cast','Cast it face down as a 2/2 with ward {2} for {3}. Turn it face up any time for its disguise cost.');
+k('Prototype','cast','You may cast it for its prototype cost as a smaller version with different color, power and toughness.');
+k('Impending','cast',"Cast it for its impending cost: it enters with N time counters and isn't a creature until the last is removed (one each end step).");
+k('Warp','cast','Cast it from your hand for its warp cost. Exile it at the next end step; you may cast it from exile on a later turn.');
+k('Harmonize','cast',"Cast it from your graveyard for its harmonize cost. You may tap a creature to reduce the cost by that creature's power. Then exile it.");
+k('Mayhem','cast','You may cast it from your graveyard for its mayhem cost if you discarded it this turn.');
+k('Ninjutsu','cast','Pay the ninjutsu cost and return an unblocked attacker you control to hand: put this onto the battlefield tapped and attacking.');
+k('Cipher','cast','Encode it on a creature you control. Whenever that creature deals combat damage to a player, cast a copy free.');
+k('Squad','cast','As you cast it, pay the squad cost any number of times. When it enters, create that many token copies.');
+k('Offspring','cast','Pay the offspring cost as you cast it. When it enters, create a 1/1 token copy of it.');
+
+// Commander & multiplayer
+k('Partner','cmd','You can have two commanders if both have partner.',{re:/\bpartner\b(?! with)/i});
+k('Partner with','cmd','You can have both named partners as commanders. When this enters, target player may search their library for the other, put it into their hand, then shuffle.');
+k('Friends forever','cmd','You can have two commanders if both have friends forever.');
+k('Choose a Background','cmd','You can have a Background enchantment as your second commander.',{re:/choose a background/i});
+k("Doctor's companion",'cmd','You can have two commanders if the other one is the Doctor.',{re:/doctor['’]s companion/i});
+k('Companion','cmd',"If your deck meets this card's condition, you may pay {3} once to put it into your hand from outside the game.",{re:/^Companion\s*[—-]/m});
+k('Myriad','cmd','Whenever it attacks, for each other opponent you may create a token copy tapped and attacking that player. Exile the tokens at end of combat.');
+k('Melee','cmd','Whenever it attacks, it gets +1/+1 until end of turn for each opponent you attacked this combat.');
+k('Dethrone','cmd','Whenever it attacks the player with the most life (or tied for most), put a +1/+1 counter on it.');
+k('Assist','cmd','Another player can help pay the generic mana of this spell.');
+k('Undaunted','cmd','Costs {1} less to cast for each opponent you have.');
+k('Encore','cmd','Exile it from your graveyard and pay the encore cost: for each opponent, create a token copy that attacks them this turn. Sacrifice them at the end step.');
+k('Goad','cmd','A goaded creature attacks each combat if able, and attacks a player other than you if able, until your next turn.',{act:true});
+k('Monarch','cmd','The monarch draws a card at their end step. Deal combat damage to the monarch to become the monarch.',{re:/\bmonarch\b/i});
+k('Initiative','cmd','Taking the initiative ventures into the Undercity, and so does each of your upkeeps. Deal combat damage to its holder to take it.',{re:/\bthe initiative\b/i});
+k('Venture into the dungeon','cmd','Move your marker to the next room of a dungeon and get that room\'s effect.',{re:/ventures? into the (dungeon|undercity)/i});
+k('Villainous choice','cmd','The player faces two options and must choose one of them.',{re:/villainous choice/i});
+k('Planeswalk','cmd','Only matters in a Planechase game: move to the next plane card. Otherwise, ignore it.',{act:true});
+k('Eminence','cmd','Works while your commander is in the command zone or on the battlefield.',{re:/^Eminence\s+—/m});
+
+// Creatures & permanents
+k('Undying','perm',"When it dies, if it had no +1/+1 counters, return it to the battlefield with a +1/+1 counter.");
+k('Persist','perm','When it dies, if it had no -1/-1 counters, return it to the battlefield with a -1/-1 counter.');
+k('Afterlife','perm','When it dies, create N 1/1 white and black Spirit tokens with flying.');
+k('Modular','perm','Enters with N +1/+1 counters. When it dies, you may put its +1/+1 counters on target artifact creature.');
+k('Graft','perm','Enters with N +1/+1 counters. Whenever another creature enters, you may move one of them onto it.');
+k('Evolve','perm','Whenever a creature with greater power or toughness enters under your control, put a +1/+1 counter on this.');
+k('Adapt','perm','If it has no +1/+1 counters, put N +1/+1 counters on it.',{act:true});
+k('Monstrosity','perm',"If it isn't monstrous, put N +1/+1 counters on it and it becomes monstrous.");
+k('Bolster','perm','Put N +1/+1 counters on the creature you control with the least toughness.',{act:true});
+k('Support','perm','When it enters, put a +1/+1 counter on each of up to N other target creatures.');
+k('Outlast','perm','Pay the cost and {T}: put a +1/+1 counter on it. Sorcery speed.');
+k('Riot','perm','It enters with your choice of a +1/+1 counter or haste.');
+k('Unleash','perm',"You may have it enter with a +1/+1 counter. It can't block while it has one.");
+k('Fabricate','perm','When it enters, put N +1/+1 counters on it or create N 1/1 Servo artifact creature tokens.');
+k('Devour','perm','As it enters, you may sacrifice any number of creatures. It enters with N +1/+1 counters for each.');
+k('Exploit','perm','When it enters, you may sacrifice a creature.');
+k('Sunburst','perm','Enters with a +1/+1 counter (or a charge counter if not a creature) for each color of mana spent on it.');
+k('Backup','perm',"When it enters, put N +1/+1 counters on target creature. If that's another creature, it also gains this one's listed abilities this turn.");
+k('Bloodthirst','perm','If an opponent was dealt damage this turn, it enters with N +1/+1 counters.');
+k('Level up','perm','Pay the cost: put a level counter on it. Sorcery speed. New abilities unlock at the listed levels.');
+k('Endure','perm','Put N +1/+1 counters on it, or create an N/N white Spirit creature token.',{act:true});
+k('Echo','perm','At your upkeep after it comes under your control, pay its echo cost or sacrifice it.');
+k('Cumulative upkeep','perm','At your upkeep, put an age counter on it, then pay the cost once per age counter or sacrifice it.');
+k('Fading','perm','Enters with N fade counters. Remove one at each of your upkeeps. If you can\'t, sacrifice it.');
+k('Vanishing','perm','Enters with N time counters. Remove one at each of your upkeeps. When the last is removed, sacrifice it.');
+k('Phasing','perm',"It phases out on every other untap step. While phased out, it's treated as though it doesn't exist.",{re:/\bphas(ing|es (in|out)|ed (in|out))\b/i});
+k('Soulbond','perm','Pair it with another unpaired creature when either enters. Both get the bonus while paired.');
+k('Champion','perm',"When it enters, sacrifice it unless you exile another creature of the named type you control. That card returns when this leaves.",{re:/\bchampion an?\b/i});
+k('Haunt','perm','When it dies or resolves, exile it haunting target creature. Its effect happens again when that creature dies.');
+k('Extort','perm','Whenever you cast a spell, you may pay {W/B}. If you do, each opponent loses 1 life and you gain that much.');
+k('Changeling','perm','It is every creature type.');
+k('Devoid','perm','It has no color.');
+k('Living metal','perm',"During your turn, it's an artifact creature.");
+k('More Than Meets the Eye','perm','You may cast it converted for this cost. It enters transformed.');
+k('Compleated','perm','You can pay Phyrexian mana with 2 life. It enters with two fewer loyalty counters for each symbol paid with life.');
+k('Daybound','perm','If a player casts no spells during their own turn, it becomes night and this transforms. Two spells in one turn makes it day.');
+k('Nightbound','perm','If a player casts two or more spells in a turn, it becomes day and this transforms back.');
+k('Transform','perm','Turn this double-faced card over to its other face.',{act:true});
+k('Regenerate','perm','The next time it would be destroyed this turn, instead tap it, remove all damage from it and remove it from combat.',{act:true});
+k('Detain','perm',"Until your next turn, the detained permanent can't attack, block or use activated abilities.",{act:true});
+k('Suspect','perm',"A suspected creature has menace and can't block.",{act:true});
+k('Crew','perm','Tap creatures with total power N or more: this Vehicle becomes an artifact creature until end of turn.',{act:true});
+k('Equip','perm','Pay the cost: attach it to target creature you control. Sorcery speed.');
+k('Reconfigure','perm',"Pay the cost: attach it to target creature you control, or unattach it. It isn't a creature while attached. Sorcery speed.");
+k('Fortify','perm','Pay the cost: attach this Fortification to target land you control. Sorcery speed.');
+k('Enchant','perm','This Aura attaches to the kind of permanent named. If that permanent leaves, the Aura goes to the graveyard.');
+k('Umbra armor','perm','If the enchanted permanent would be destroyed, instead remove all damage from it and destroy this Aura.',{re:/\b(umbra|totem) armor\b/i});
+k('Living weapon','perm','When it enters, create a 0/0 black Phyrexian Germ token and attach this to it.');
+k('For Mirrodin!','perm','When it enters, create a 2/2 red Rebel creature token and attach this to it.');
+k('Job select','perm','When it enters, create a 1/1 colorless Hero creature token and attach this to it.');
+k('Craft','perm','Pay the cost and exile this plus the listed materials from the battlefield or graveyard: return it transformed. Sorcery speed.',{re:/\bcraft with\b/i});
+k('Station','perm','Tap another creature you control: put charge counters equal to its power on this. Sorcery speed. Abilities unlock at the listed totals.');
+k('Exhaust','perm','An exhaust ability can be activated only once.');
+k('Read ahead','perm','As this Saga enters, choose which chapter to start on. Earlier chapters don\'t trigger.');
+k('The Ring tempts you','perm','Choose a creature as your Ring-bearer. Your Ring gains its next ability.',{re:/the ring tempts you/i});
+k('Saga','perm','Add a lore counter when it enters and after your draw step. The chapter matching the count triggers. Sacrifice it after the last chapter.',{type:/\bSaga\b/});
+k('Adventure','perm','Cast the Adventure half first. It goes to exile, and you may cast the creature from exile later.',{type:/\bAdventure\b/});
+k('Class','perm','Starts at level 1. Pay a level cost at sorcery speed to gain the next level and its ability.',{type:/\bClass\b/});
+k('Room','perm','Cast one door. Pay the other door\'s unlock cost later (sorcery speed) to unlock it too.',{type:/\bRoom\b/});
+k('Case','perm','At your end step, if you meet its "To solve" condition, it becomes solved and its "Solved" ability turns on.',{type:/\bCase\b/});
+k('Battle','perm','A Siege enters with defense counters and an opponent protects it. Attack it to remove counters; defeat it to get its reward.',{type:/\bBattle\b/});
+
+// Library & graveyard
+k('Scry','lib','Look at the top N cards of your library. Put any of them on the bottom and the rest on top in any order.',{re:/\bscr(y|ies|ied)\b/i});
+k('Surveil','lib','Look at the top N cards of your library. Put any of them into your graveyard and the rest on top in any order.',{re:/\bsurveil(s|led|ling)?\b/i});
+k('Mill','lib','Put the top N cards of your library into your graveyard.',{act:true});
+k('Cycling','lib','Pay the cycling cost and discard this card: draw a card.');
+k('Basic landcycling','lib','Pay the cost and discard this card: search your library for a basic land card, reveal it, put it into your hand.');
+k('Typecycling','lib','Pay the cost and discard this card: search your library for a card of the named type (Islandcycling, Wizardcycling...), reveal it, put it into your hand.',{re:/(?<!basic )\b(?!land)[a-z]+cycling\b/i});
+k('Landcycling','lib','Pay the cost and discard this card: search your library for a land card, reveal it, put it into your hand.',{re:/(?<!basic )\blandcycling\b/i});
+k('Investigate','lib','Create a Clue token.',{act:true});
+k('Explore','lib','Reveal the top card. If it\'s a land, put it in your hand. If not, put a +1/+1 counter on this creature; you may put the card in your graveyard.',{act:true});
+k('Connive','lib','Draw a card, then discard a card. If you discarded a nonland card, put a +1/+1 counter on this creature.',{act:true});
+k('Learn','lib','You may reveal a Lesson card from outside the game and put it into your hand, or discard a card to draw a card.',{act:true});
+k('Dredge','lib','If you would draw a card, you may instead mill N cards and return this card from your graveyard to your hand.');
+k('Hideaway','lib','When it enters, look at the top N cards, exile one face down and put the rest on the bottom. Its ability later lets you play that card free.');
+k('Transmute','lib','Pay the cost and discard it: search your library for a card with the same mana value. Sorcery speed.');
+k('Scavenge','lib','Pay the cost and exile it from your graveyard: put +1/+1 counters equal to its power on target creature. Sorcery speed.');
+k('Reinforce','lib','Pay the cost and discard it: put N +1/+1 counters on target creature.');
+k('Unearth','lib','Pay the cost: return it from your graveyard with haste. Exile it at the next end step or if it would leave. Sorcery speed.');
+k('Embalm','lib','Pay the cost and exile it from your graveyard: create a token copy that is a white Zombie. Sorcery speed.');
+k('Eternalize','lib','Pay the cost and exile it from your graveyard: create a token copy that is a 4/4 black Zombie. Sorcery speed.');
+k('Renew','lib','Pay the cost and exile this card from your graveyard for its effect. Sorcery speed.');
+k('Forage','lib','Exile three cards from your graveyard or sacrifice a Food.',{act:true});
+k('Collect evidence','lib','Exile cards with total mana value N or more from your graveyard.',{act:true});
+k('Manifest','lib','Put the top card of your library onto the battlefield face down as a 2/2. If it\'s a creature card, you may turn it up for its mana cost.',{act:true,re:/\bmanifest(s|ed)?\b(?! dread)/i});
+k('Manifest dread','lib','Look at the top two cards. Manifest one of them and put the other into your graveyard.',{act:true});
+k('Cloak','lib',"Put it onto the battlefield face down as a 2/2 with ward {2}. If it's a creature card, you may turn it up for its mana cost.",{act:true});
+k('Clash','lib','Each clashing player reveals their top card. Higher mana value wins. Each player may put their card on the bottom.',{act:true});
+
+// Tokens & counters
+k('Clue','tok','Artifact token: "{2}, sacrifice this: draw a card."',{re:/\bClues?\b/});
+k('Food','tok','Artifact token: "{2}, {T}, sacrifice this: you gain 3 life."',{re:/\bFoods?\b/});
+k('Treasure','tok','Artifact token: "{T}, sacrifice this: add one mana of any color."',{re:/\bTreasures?\b/});
+k('Blood','tok','Artifact token: "{1}, {T}, discard a card, sacrifice this: draw a card."',{re:/\bBlood tokens?\b/});
+k('Map','tok','Artifact token: "{1}, {T}, sacrifice this: target creature you control explores. Sorcery speed."',{re:/\bMap tokens?\b/});
+k('Gold','tok','Artifact token: "Sacrifice this: add one mana of any color."',{re:/\bGold tokens?\b/});
+k('Powerstone','tok','Artifact token: "{T}: add {C}. This mana can\'t be spent to cast nonartifact spells."',{re:/\bPowerstones?\b/});
+k('Junk','tok','Artifact token: "{T}, sacrifice this: exile the top card of your library; you may play it this turn. Sorcery speed."',{re:/\bJunk tokens?\b/});
+k('Shard','tok','Enchantment token: "{2}, sacrifice this: scry 1, then draw a card."',{re:/\bShard tokens?\b/});
+k('Lander','tok','Artifact token: "{2}, {T}, sacrifice this: search for a basic land card and put it onto the battlefield tapped."',{re:/\bLander tokens?\b/});
+k('Role','tok','Aura token with a bonus. A creature can have only one Role from each player; a new one replaces the old.',{re:/\bRole\b/});
+k('Incubate','perm','Create an Incubator token with N +1/+1 counters. Pay {2} to turn it into a 0/0 Phyrexian artifact creature.',{act:true});
+k('Amass','perm',"Put N +1/+1 counters on an Army you control. If you don't control one, first create a 0/0 Army token.",{act:true});
+k('Populate','perm','Create a token copy of a creature token you control.',{act:true});
+k('Proliferate','perm','Choose any number of permanents and/or players with counters. Give each one more counter of each kind already there.',{act:true});
+k('Time travel','perm','For each permanent you control and suspended card you own with time counters, you may add or remove one time counter.',{act:true});
+
+// Counters
+k('Energy counters','ctr','{E} is an energy counter. You get them from effects and pay them for other effects.',{re:/\{E\}/});
+k('Poison counters','ctr','A player with ten or more poison counters loses the game.',{re:/\bpoison counters?\b/i});
+k('Shield counter','ctr','If it would be dealt damage or destroyed, instead remove a shield counter from it.',{re:/\bshield counters?\b/i});
+k('Stun counter','ctr','If it would become untapped, instead remove a stun counter from it.',{re:/\bstun counters?\b/i});
+k('Experience counters','ctr','Counters you (the player) get. Cards count how many you have.',{re:/\bexperience counters?\b/i});
+k('Keyword counters','ctr','A counter named after a keyword (flying, menace and so on) gives the permanent that keyword while the counter is on it.',{re:/\b(flying|first strike|double strike|deathtouch|haste|hexproof|indestructible|lifelink|menace|reach|trample|vigilance) counters?\b/i});
+k('Time counters','ctr','Used by suspend, vanishing, impending and time travel. Something happens when the last one is removed.',{re:/\btime counters?\b/i});
+k('Lore counters','ctr','Sagas get one when they enter and after your draw step. Each new count triggers that chapter.',{re:/\blore counters?\b/i});
+
+/* Ability words: italic labels before " — " with no rules meaning, so the card says what they do. */
+const AW = {
+  'paradox':'Triggers whenever you cast a spell from anywhere other than your hand (exile, graveyard, command zone and so on). Copies are not cast.',
+  'landfall':'Triggers whenever a land enters the battlefield under your control.',
+  'threshold':'Bonus while seven or more cards are in your graveyard.',
+  'delirium':'Bonus while there are four or more card types among cards in your graveyard.',
+  'metalcraft':'Bonus while you control three or more artifacts.',
+  'morbid':'Bonus if a creature died this turn.',
+  'raid':'Bonus if you attacked this turn.',
+  'revolt':'Bonus if a permanent you controlled left the battlefield this turn.',
+  'spell mastery':'Bonus if there are two or more instant and/or sorcery cards in your graveyard.',
+  'hellbent':'Bonus while you have no cards in hand.',
+  'domain':'Counts the basic land types among lands you control.',
+  'converge':'Counts the colors of mana spent to cast it.',
+  'constellation':'Triggers whenever an enchantment enters under your control.',
+  'heroic':'Triggers whenever you cast a spell that targets this.',
+  'magecraft':'Triggers whenever you cast or copy an instant or sorcery spell.',
+  'enrage':'Triggers whenever this creature is dealt damage.',
+  'battalion':'Triggers whenever this and at least two other creatures attack.',
+  'ferocious':'Bonus if you control a creature with power 4 or greater.',
+  'formidable':'Works if creatures you control have total power 8 or greater.',
+  'coven':'Bonus if you control three or more creatures with different powers.',
+  'corrupted':'Bonus if an opponent has three or more poison counters.',
+  'celebration':'Bonus if two or more nonland permanents entered under your control this turn.',
+  'descend 4':'Bonus if there are four or more permanent cards in your graveyard.',
+  'descend 8':'Bonus if there are eight or more permanent cards in your graveyard.',
+  'fathomless descent':'Counts the permanent cards in your graveyard.',
+  'eerie':'Triggers whenever an enchantment enters under your control and whenever you fully unlock a Room.',
+  'survival':'Triggers at the beginning of your second main phase if this creature is tapped.',
+  'void':'Bonus if a nonland permanent left the battlefield this turn or a spell was warped this turn.',
+  'flurry':'Triggers whenever you cast your second spell each turn.',
+  'alliance':'Triggers whenever another creature enters under your control.',
+  'pack tactics':'Triggers if attacking creatures you control have total power 6 or greater.',
+  'undergrowth':'Counts the creature cards in your graveyard.',
+  'adamant':'Bonus if at least three mana of the same color was spent to cast it.',
+  'valiant':'Triggers the first time each turn this becomes the target of a spell or ability you control.',
+  'inspired':'Triggers whenever this creature becomes untapped.',
+  'rally':'Triggers whenever this or another Ally enters under your control.',
+  'kinship':'At your upkeep, look at your top card; you may reveal it if it shares a creature type with this.',
+  'lieutenant':'Bonus while you control your commander.',
+  'imprint':'Labels the ability that exiles a card "with" this permanent. Other abilities refer to that card.',
+  'secret council':'Each player secretly votes, then all votes are revealed at once.',
+  'will of the council':'Starting with you, each player votes in turn. The option with the most votes happens.',
+  "council's dilemma":'Starting with you, each player votes. Each option happens once for each vote it got.',
+  'join forces':'Starting with you, each player may pay any amount of mana to add to the effect.',
+  'tempting offer':'Each opponent may also take the effect. For each one who does, you get it again.',
+  'parley':'Each player reveals the top card of their library; the effect counts the nonland cards.',
+  'strive':'Costs more for each target beyond the first.',
+  'chroma':'Counts colored mana symbols among the named cards.',
+  'sweep':'Return any number of lands of the named type you control to your hand for the effect.',
+  'radiance':'Also affects each other permanent that shares a color with the target.',
+  'grandeur':'Discard another card with the same name to use the ability.',
+  'channel':'Discard this card from your hand to use the ability.',
+  'bloodrush':'Discard this card to give an attacking creature its bonus.',
+  'fateful hour':'Bonus while you have 5 or less life.',
+  'cohort':'Tap this and an untapped Ally you control to use the ability.',
+  'addendum':'Bonus if you cast it during your main phase.',
+};
+
+/* ===================================================================== */
+const $ = s => document.querySelector(s);
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escHtml = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+for (const g of G) {
+  g.key = g.name.toLowerCase();
+  if (!g.re && !g.type) g.re = new RegExp('(?<![\\w-])' + escRe(g.name) + (g.act ? '(?:s|es|ed|d|ing)?' : '') + '(?![\\w-])', 'i');
+}
+const NOISE = new Set(['double', 'jump', 'typecycling', 'landcycling', 'partner']);
+const FRAME = {
+  W: ['#e9dfb5', '#fbf6e2'], U: ['#3b80bd', '#d3e3f1'], B: ['#4d4641', '#cfc8c1'], R: ['#c9472f', '#f2c9b5'],
+  G: ['#3a7f50', '#cde2cd'], M: ['#d4b25c', '#f2e2a8'], C: ['#aeb7bf', '#e5e9ec']
+};
+const ART = { W: '#d9cc93', U: '#1f5f99', B: '#2e2a27', R: '#b5371f', G: '#256b3d', C: '#7d8791' };
+
+// Real Magic mana and tap symbols, from Scryfall's symbol images. Falls back to a drawn pip offline.
+function symFallback(x) {
+  const c = /^[WUBRGCTQE]$/.test(x) ? x : (/^[WUBRG]\/[WUBRGP]$/.test(x) ? x[0] : 'C');
+  return `<span class="ms ${c}">${x === 'T' ? '⟳' : escHtml(x)}</span>`;
+}
+function symOne(x) {
+  const file = x.toUpperCase().replace(/\//g, '');
+  if (!/^[A-Z0-9½∞]{1,4}$/.test(file)) return symFallback(x);
+  return `<img class="mi" src="https://svgs.scryfall.io/card-symbols/${encodeURIComponent(file)}.svg" alt="{${escHtml(x)}}" data-sym="${escHtml(x)}">`;
+}
+function sym(t) {
+  return escHtml(t).replace(/\{([^}]+)\}/g, (m, x) => symOne(x));
+}
+document.addEventListener('error', e => {
+  const img = e.target;
+  if (img.tagName === 'IMG' && img.classList.contains('mi')) img.outerHTML = symFallback(img.dataset.sym);
+}, true);
+
+/* ---------- storage helpers (per-viewer conveniences only) ---------- */
+function load(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } }
+function save(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} }
+
+const state = {
+  cards: [], commanders: [], entries: [], notFound: [],
+  edits: load('kb-edits-v1', {}), hidden: load('kb-hidden-v1', {}),
+};
+let cache = load('kb-cache-v2', {});
+
+// Groups: an ordered list of {id, title}, plus keywords the user moved out of their default group.
+const defaultGroups = () => ({ list: CATS.map(([id, title]) => ({ id, title })), assign: {} });
+state.groups = (() => {
+  const g = load('kb-groups-v1', null);
+  return g && Array.isArray(g.list) && g.list.length && g.assign ? g : defaultGroups();
+})();
+function saveGroups() { save('kb-groups-v1', state.groups); }
+function groupOf(e) {
+  const ids = new Set(state.groups.list.map(g => g.id));
+  const a = state.groups.assign[e.key];
+  if (a && ids.has(a)) return a;
+  if (ids.has(e.cat)) return e.cat;
+  return state.groups.list[state.groups.list.length - 1].id;
+}
+
+/* ---------- Decklist parsing ---------- */
+const HEADER = /^(\/\/\s*)?(commanders?|command zone|deck|main\s?deck|mainboard|main|companions?|sideboard|maybeboard|considering|tokens?|lands?|creatures?|instants?|sorcer(y|ies)|artifacts?|enchantments?|planeswalkers?|battles?|other|spells?)\s*(\(\d+\))?\s*:?$/i;
+function parseDeck(txt) {
+  const out = []; let section = 'main';
+  for (const raw of txt.split(/\r?\n/)) {
+    let line = raw.trim();
+    if (!line || line.startsWith('#')) continue;
+    const h = line.match(HEADER);
+    if (h) {
+      const w = h[2].toLowerCase();
+      section = /^command/.test(w) ? 'commander' : /side|maybe|consider|token/.test(w) ? 'skip' : 'main';
+      continue;
+    }
+    if (section === 'skip' || /^SB:/i.test(line)) continue;
+    let isCmd = section === 'commander' || /\[commander/i.test(line) || /\*CMDR\*/i.test(line);
+    let qty = 1;
+    const m = line.match(/^(\d+)\s*x?\s+(.+)$/i);
+    if (m) { qty = +m[1]; line = m[2]; }
+    line = line
+      .replace(/\s*\[[^\]]*\]\s*/g, ' ')           // [Category] tags
+      .replace(/\s*\^[^^]*\^\s*/g, ' ')            // ^tags^
+      .replace(/\s+\*[A-Z]+\*/gi, ' ')             // *F*, *CMDR*
+      .replace(/\s+#\S.*$/, '')                    // #tags
+      .replace(/\s+\([A-Za-z0-9]{2,6}\)(\s+\S+)?\s*$/, '') // (SET) 123
+      .trim();
+    if (line) out.push({ qty, name: line, front: line.split(/\s*\/\/?\s*/)[0].trim(), isCmd });
+  }
+  return out;
+}
+
+/* ---------- Scryfall lookup ---------- */
+const slim = c => ({
+  name: c.name,
+  type: c.type_line || (c.card_faces || []).map(f => f.type_line).join(' // '),
+  text: c.oracle_text || (c.card_faces || []).map(f => f.oracle_text || '').join('\n'),
+  faces: (c.card_faces || []).map(f => f.name),
+  keywords: c.keywords || [],
+  ci: c.color_identity || [],
+  art: (c.image_uris || (c.card_faces || [])[0]?.image_uris || {}).art_crop || '',
+  artist: c.artist || (c.card_faces || [])[0]?.artist || ''
+});
+async function fetchCards(list) {
+  const want = [...new Map(list.map(l => [l.front.toLowerCase(), l])).values()];
+  const result = new Map(), missing = [];
+  const toFetch = want.filter(l => {
+    const hit = cache[l.front.toLowerCase()];
+    if (hit) { result.set(l.front.toLowerCase(), hit); return false; }
+    return true;
+  });
+  // Plain GET requests only: no custom headers, so the browser needs no extra CORS preflight.
+  const pause = () => new Promise(res => setTimeout(res, 110));
+  const keep = (c, wantedKeys) => {
+    const s = slim(c);
+    const keys = [c.name, ...s.faces].map(n => n.toLowerCase());
+    for (const w of wantedKeys) if (keys.includes(w)) { result.set(w, s); cache[w] = s; }
+  };
+  const getJson = async url => {
+    const r = await fetch(url);
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error('Scryfall answered ' + r.status);
+    return r.json();
+  };
+  const BATCH = 30;
+  for (let i = 0; i < toFetch.length; i += BATCH) {
+    const chunk = toFetch.slice(i, i + BATCH);
+    setStatus(`Looking up cards on Scryfall… ${Math.min(i + BATCH, toFetch.length)} of ${toFetch.length}`);
+    const q = chunk.map(l => `!"${l.front.replace(/"/g, '')}"`).join(' or ');
+    let url = 'https://api.scryfall.com/cards/search?unique=cards&q=' + encodeURIComponent(q);
+    const wanted = chunk.map(l => l.front.toLowerCase());
+    while (url) {
+      const j = await getJson(url);
+      if (!j) break;
+      for (const c of j.data) keep(c, wanted);
+      url = j.has_more ? j.next_page : null;
+      await pause();
+    }
+  }
+  // Anything the exact search missed: try Scryfall's spelling-tolerant lookup one card at a time.
+  for (const l of toFetch) {
+    const w = l.front.toLowerCase();
+    if (result.has(w)) continue;
+    setStatus(`Checking spelling of "${l.front}"…`);
+    const c = await getJson('https://api.scryfall.com/cards/named?fuzzy=' + encodeURIComponent(l.front));
+    await pause();
+    if (c && c.object === 'card') { const s = slim(c); result.set(w, s); cache[w] = s; }
+    else missing.push(l.front);
+  }
+  save('kb-cache-v2', cache);
+  return { result, missing };
+}
+
+/* ---------- Keyword analysis ---------- */
+function analyze(cards) {
+  const entries = new Map();
+  const flavor = { labels: new Set(), cards: new Set() };
+  const add = (key, base, cardName) => {
+    if (!entries.has(key)) entries.set(key, { ...base, key, cards: new Set() });
+    entries.get(key).cards.add(cardName);
+  };
+  for (const c of cards) {
+    let text = c.text || '';
+    for (const n of [c.name, ...c.faces]) if (n) text = text.split(n).join('~');
+    const short = c.name.split(/[,\/]/)[0].trim();
+    if (short.length > 3) text = text.split(short).join('~');
+    const matched = new Set();
+    for (const g of G) {
+      const hit = g.type ? g.type.test(c.type) : g.re.test(text);
+      if (hit) { add(g.key, g, c.name); matched.add(g.key); }
+    }
+    if (matched.has('partner with')) { const e = entries.get('partner'); if (e) { e.cards.delete(c.name); if (!e.cards.size) entries.delete('partner'); } }
+    // italic labels before " — "
+    const labels = new Set();
+    for (const line of text.split('\n')) {
+      const m = line.match(/^([A-Z][A-Za-z0-9'’!,\- ]{1,40}?) — /);
+      if (!m) continue;
+      const label = m[1].trim();
+      if (/^Choose\b/.test(label) || /^[IVX]+(\s*,\s*[IVX]+)*$/.test(label)) continue;
+      if (G.some(g => g.re && g.re.test(label) && g.key === label.toLowerCase())) continue;
+      if (/^(Max speed|Exhaust|Renew|Eminence|Companion)$/i.test(label)) continue;
+      labels.add(label.toLowerCase());
+      const aw = AW[label.toLowerCase()];
+      if (aw) add('aw:' + label.toLowerCase(), { name: label, cat: 'deck', text: aw, aw: true }, c.name);
+      else { flavor.labels.add(label); flavor.cards.add(c.name); }
+    }
+    // Scryfall keywords the glossary doesn't know
+    for (const kwName of c.keywords) {
+      const low = kwName.toLowerCase();
+      if (NOISE.has(low) || labels.has(low) || AW[low] !== undefined) continue;
+      if (G.some(g => g.key === low || (g.re && g.re.test(kwName)))) continue;
+      const rm = (c.text || '').match(new RegExp(escRe(kwName) + '[^\\n(]*\\(([^)]+)\\)', 'i'));
+      add('x:' + low, { name: kwName, cat: 'deck', text: rm ? rm[1] : 'Read the card for what this does.' }, c.name);
+    }
+  }
+  if (flavor.labels.size) {
+    entries.set('flavor', {
+      key: 'flavor', name: 'Flavor words', cat: 'deck', flavorWords: true,
+      text: `${[...flavor.labels].join(', ')}: names only, with no rules meaning. Read the text after the dash.`,
+      cards: flavor.cards
+    });
+  }
+  return [...entries.values()];
+}
+
+/* ---------- Panel construction ---------- */
+function identity() {
+  const ci = new Set();
+  for (const c of state.commanders) for (const x of c.ci) ci.add(x);
+  if (!ci.size) for (const c of state.cards) for (const x of c.ci) ci.add(x);
+  return ['W', 'U', 'B', 'R', 'G'].filter(x => ci.has(x));
+}
+function deckTitle() {
+  const v = $('#deckname').value.trim();
+  if (v) return v;
+  if (state.commanders.length) return state.commanders.map(c => c.name.split(/[,\/]/)[0].trim()).join(' & ');
+  return 'My Deck';
+}
+function costHtml() {
+  const id = identity();
+  return (id.length ? id : ['C']).map(symOne).join('');
+}
+function applyFrame() {
+  const id = identity();
+  const f = FRAME[id.length > 1 ? 'M' : id[0] || 'C'];
+  const root = document.documentElement.style;
+  root.setProperty('--frame', f[0]); root.setProperty('--bar', f[1]);
+  const art = (id.length ? id : ['C']).map(x => ART[x]);
+  root.setProperty('--art', art.length > 1 ? `linear-gradient(135deg, ${art.join(', ')})` : art[0]);
+}
+function panelShell(cls, title) {
+  const p = document.createElement('section');
+  p.className = 'panel ' + cls;
+  p.innerHTML = `<div class="frame"><div class="namebar"><span class="nm">${escHtml(title)}</span><span class="cost">${costHtml()}</span></div><div class="textbox"></div></div><div class="collector"><span class="cl"></span><span class="cr"></span></div>`;
+  return p;
+}
+// Cover art: the first commander's artwork (its front face for two-sided cards).
+const coverArt = () => state.commanders[0]?.art ? state.commanders[0] : null;
+function coverPanel(nKw, nCards, mode) {
+  const p = document.createElement('section');
+  p.className = 'panel cover';
+  const cmd = state.commanders.map(c => escHtml(c.name)).join('<br>');
+  p.innerHTML = `<div class="frame">
+      <div class="namebar"><span class="nm">${escHtml(deckTitle())}</span><span class="cost">${costHtml()}</span></div>
+      ${coverArt()
+        ? `<div class="art has-img"><img class="artimg" src="${escHtml(coverArt().art)}" alt="Art of ${escHtml(coverArt().name)}"></div>`
+        : `<div class="art"><div class="small">Keyword Guide</div><div class="big">${escHtml(deckTitle())}</div></div>`}
+      <div class="typebar"><span>Legendary Reference — Keywords</span><span class="setsym"></span></div>
+      <div class="textbox">
+        ${cmd ? `<div class="kw"><b>Commander${state.commanders.length > 1 ? 's' : ''}:</b><br>${cmd}</div>` : ''}
+        <div class="kw">Every keyword, ability word and token in this ${nCards}-card deck, with what it does.</div>
+        <div class="kw flavor">${{ booklet: 'Turn the page to begin.', accordion: 'Pull the panels apart to read.', cards: 'Sleeve these with your deck.', image: 'Zoom in to read every card.' }[mode]}</div>
+      </div>
+    </div>
+    <div class="collector"><span class="cl"></span><span class="cr"></span></div>
+`;
+  return p;
+}
+function legendPanel() {
+  const p = panelShell('legend', 'How to Read');
+  p.querySelector('.textbox').innerHTML = `
+    <div class="kw"><span class="n">×3</span><b>Count tag</b> <i>(How many cards in this deck have, grant or mention the keyword.)</i></div>
+    <div class="kw"><b>Symbols</b> <i>(${sym('{T}')} means tap. ${sym('{2}')} ${sym('{G}')} are mana costs.)</i></div>
+    <div class="kw"><b>N</b> <i>(Stands for the number printed after the keyword on the card, like Ward 2 or Scry 1.)</i></div>
+    <div class="kw"><b>Ability words</b> <i>(Italic labels before a dash, like Landfall. They only name the ability; the text after the dash is the rule.)</i></div>
+    <div class="kw"><b>The card wins</b> <i>(If a card and this guide disagree, follow the card.)</i></div>
+    <div class="kw flavor" style="margin-top:auto;font-style:italic;color:#4a3f31">Card data from Scryfall. Not affiliated with Wizards of the Coast.</div>`;
+  return p;
+}
+function notesPanel() {
+  const p = panelShell('notes', 'Notes');
+  return p;
+}
+function entryHtml(e, showNames) {
+  const text = state.edits[e.key] ?? e.text;
+  const names = showNames ? `<span class="cn">${[...e.cards].map(escHtml).join(', ')}</span>` : '';
+  return `<span class="n">×${e.cards.size}</span><b>${escHtml(e.name)}</b> <i>(${sym(text)})</i>${names}`;
+}
+
+const order = () => document.querySelector('input[name=order]:checked').value;
+function overflows(p) { const t = p.querySelector('.textbox'); return t.scrollHeight > t.clientHeight + 0.5; }
+
+function flow(mode) {
+  const meas = $('#measure'); meas.innerHTML = '';
+  const showNames = $('#names').checked;
+  const visible = state.entries.filter(e => !state.hidden[e.key]);
+  const panels = [];
+  let cur = null;
+  const startPanel = title => { cur = panelShell('content', title); meas.appendChild(cur); panels.push(cur); return cur; };
+  const az = (a, b) => a.name.localeCompare(b.name);
+  const groups = [];
+  if (order() === 'az') {
+    // One alphabetical run of keywords; tokens and counters stay on their own cards after it.
+    groups.push({ title: 'Keywords', letters: true, list: visible.filter(e => e.cat !== 'tok' && e.cat !== 'ctr').sort(az) });
+    for (const [cat, title] of CATS.filter(([c]) => c === 'tok' || c === 'ctr')) groups.push({ title, list: visible.filter(e => e.cat === cat).sort(az) });
+  } else {
+    for (const g of state.groups.list) {
+      const list = visible.filter(e => groupOf(e) === g.id).sort(g.id === 'deck'
+        ? (a, b) => (b.flavorWords ? -1 : 0) - (a.flavorWords ? -1 : 0) || b.cards.size - a.cards.size || az(a, b)
+        : az);
+      groups.push({ title: g.title, list });
+    }
+  }
+  for (const g of groups) {
+    if (!g.list.length) continue;
+    // Each group starts on its own card; a long group continues on the next card under the same name.
+    const first = panels.length;
+    const used = [[]];
+    startPanel(g.title);
+    for (const e of g.list) {
+      const node = document.createElement('div'); node.className = 'kw'; node.innerHTML = entryHtml(e, showNames);
+      let tb = cur.querySelector('.textbox');
+      tb.appendChild(node);
+      if (overflows(cur) && tb.children.length > 1) {
+        node.remove();
+        startPanel(g.title); used.push([]);
+        tb = cur.querySelector('.textbox');
+        tb.appendChild(node);
+      }
+      used[used.length - 1].push(e.name);
+    }
+    if (g.letters) {
+      // Name each card by the letters it covers, like "Keywords A–F".
+      used.forEach((names, i) => {
+        const a = names[0][0].toUpperCase(), b = names[names.length - 1][0].toUpperCase();
+        panels[first + i].querySelector('.nm').textContent = `Keywords ${a === b ? a : a + '–' + b}`;
+      });
+    }
+  }
+  const pages = [coverPanel(visible.length, state.total || state.cards.length, mode), ...panels];
+  const legend = legendPanel();
+  if (mode === 'booklet') { while ((pages.length + 1) % 4) pages.push(notesPanel()); }
+  pages.push(legend);
+  const total = pages.length, name = deckTitle();
+  pages.forEach((p, i) => {
+    p.querySelector('.cl').textContent = `${String(i + 1).padStart(3, '0')}/${String(total).padStart(3, '0')} • KW • EN`;
+    p.querySelector('.cr').textContent = name;
+    if (i === 0 && coverArt()?.artist) p.querySelector('.cr').textContent = 'Illus. ' + coverArt().artist;
+  });
+  return pages;
+}
+
+/* ---------- Print imposition ---------- */
+const PAPER = { a4: [297, 210], letter: [279.4, 215.9] };
+function sheetEl(w, h) { const s = document.createElement('div'); s.className = 'sheet'; s.style.width = w + 'mm'; s.style.height = h + 'mm'; return s; }
+function addTicks(box, xs) {
+  for (const x of xs) for (const pos of ['top', 'bot']) {
+    const t = document.createElement('span'); t.className = 'tick ' + pos; t.style.left = x + 'mm'; box.appendChild(t);
+  }
+}
+function impose(pages, mode, paper) {
+  const host = $('#sheets'); host.innerHTML = '';
+  const [L, S] = PAPER[paper];
+  const pageStyle = $('#page-style');
+  if (mode === 'image') {
+    // Close to square, so it fits a screen before zooming in.
+    const cols = Math.ceil(Math.sqrt(pages.length)), rows = Math.ceil(pages.length / cols);
+    const w = cols * 63 + (cols - 1) * 3 + 12, h = rows * 88 + (rows - 1) * 3 + 12;
+    pageStyle.textContent = `@page { size: ${w}mm ${h}mm; margin: 0; }`;
+    const sh = sheetEl(w, h); sh.classList.add('imgsheet');
+    sh.style.gridTemplateColumns = `repeat(${cols}, 63mm)`;
+    sh.dataset.w = w; sh.dataset.h = h;
+    pages.forEach(p => sh.appendChild(p.cloneNode(true)));
+    host.appendChild(sh);
+  } else if (mode === 'cards') {
+    pageStyle.textContent = `@page { size: ${S}mm ${L}mm; margin: 0; }`;
+    const per = 9, nSheets = Math.ceil(pages.length / per);
+    for (let s = 0; s < nSheets; s++) {
+      const cap = document.createElement('div'); cap.className = 'sheet-cap';
+      cap.textContent = `Sheet ${s + 1} of ${nSheets} · single-sided`;
+      host.appendChild(cap);
+      const sh = sheetEl(S, L);
+      const grid = document.createElement('div'); grid.className = 'cardgrid';
+      pages.slice(s * per, s * per + per).forEach(p => grid.appendChild(p.cloneNode(true)));
+      sh.appendChild(grid);
+      host.appendChild(sh);
+    }
+  } else if (mode === 'accordion') {
+    pageStyle.textContent = `@page { size: ${L}mm ${S}mm; margin: 0; }`;
+    const strips = [];
+    for (let i = 0; i < pages.length; i += 4) strips.push(pages.slice(i, i + 4));
+    for (let s = 0; s < strips.length; s += 2) {
+      const cap = document.createElement('div'); cap.className = 'sheet-cap';
+      cap.textContent = `Sheet ${s / 2 + 1} of ${Math.ceil(strips.length / 2)} · single-sided, landscape`;
+      host.appendChild(cap);
+      const sh = sheetEl(L, S); sh.style.gap = '13mm';
+      for (let k = s; k < Math.min(s + 2, strips.length); k++) {
+        const strip = document.createElement('div'); strip.className = 'strip';
+        strips[k].forEach(p => strip.appendChild(p.cloneNode(true)));
+        const more = k < strips.length - 1;
+        if (more) { const g = document.createElement('div'); g.className = 'glue'; g.textContent = 'GLUE'; strip.appendChild(g); }
+        addTicks(strip, strips[k].map((_, i) => i * 63).slice(1).concat(more ? [strips[k].length * 63] : []));
+        const lbl = document.createElement('span'); lbl.className = 'lbl';
+        lbl.textContent = `Strip ${k + 1}` + (k > 0 ? ` · glue the back of its first panel onto strip ${k}'s tab` : '') + ' · fold at the ticks, back and forth';
+        strip.appendChild(lbl);
+        sh.appendChild(strip);
+      }
+      host.appendChild(sh);
+    }
+  } else {
+    pageStyle.textContent = `@page { size: ${S}mm ${L}mm; margin: 0; }`;
+    const n = pages.length, nSheets = n / 4;
+    const spreads = [];
+    for (let s = 0; s < nSheets; s++) {
+      spreads.push({ s, front: [n - 2 * s, 2 * s + 1], back: [2 * s + 2, n - 2 * s - 1] });
+    }
+    const per = 3, gap = paper === 'a4' ? 6 : 0;
+    for (let g = 0; g < spreads.length; g += per) {
+      const group = spreads.slice(g, g + per);
+      for (const side of ['front', 'back']) {
+        const cap = document.createElement('div'); cap.className = 'sheet-cap';
+        cap.textContent = `Paper ${g / per + 1} · ${side === 'front' ? 'front' : 'back (print double-sided, flip on long edge)'}`;
+        host.appendChild(cap);
+        const sh = sheetEl(S, L); sh.style.gap = gap + 'mm';
+        for (const sp of group) {
+          const box = document.createElement('div'); box.className = 'spread';
+          sp[side].forEach(num => box.appendChild(pages[num - 1].cloneNode(true)));
+          addTicks(box, [63]);
+          const lbl = document.createElement('span'); lbl.className = 'lbl';
+          lbl.textContent = `Sheet ${sp.s + 1} ${side === 'front' ? 'outside' : 'inside'}`;
+          box.appendChild(lbl);
+          sh.appendChild(box);
+        }
+        host.appendChild(sh);
+      }
+    }
+  }
+}
+
+/* ---------- Render ---------- */
+function howto(mode, paper, pages) {
+  const sheets = mode === 'cards' ? Math.ceil(pages / 9) : mode === 'accordion' ? Math.ceil(Math.ceil(pages / 4) / 2) : Math.ceil(pages / 4 / 3);
+  const paperName = paper === 'a4' ? 'A4' : 'US Letter';
+  if (mode === 'image') return `<b>Image</b>, ${pages} cards in one high-resolution picture (${IMG_DPI} dpi).
+    <ol><li>Click <b>Save image</b>. It downloads as a PNG file.</li>
+    <li>Open it on your phone, tablet or computer and zoom in. The text stays sharp.</li>
+    <li>Click <b>Full image</b> above to see the whole picture before saving.</li></ol>`;
+  if (mode === 'cards') return `<b>Cards</b>, ${pages} separate cards on ${sheets} ${paperName} sheet${sheets > 1 ? 's' : ''}, printed one-sided.
+    <ol><li>Print at <b>100% / Actual size</b> with margins set to <b>None</b> or <b>Default</b>. Don't use "Fit to page".</li>
+    <li>Cut along the grey lines. Each card is exactly 63 × 88 mm.</li>
+    <li>Slide them into sleeves in front of a basic land or an old card so they feel like real cards.</li></ol>`;
+  if (mode === 'accordion') return `<b>Accordion</b>, ${pages} panels on ${sheets} ${paperName} sheet${sheets > 1 ? 's' : ''}, printed one-sided.
+    <ol><li>Print at <b>100% / Actual size</b> with margins set to <b>None</b> or <b>Default</b>. Don't use "Fit to page".</li>
+    <li>Cut out each strip along the grey outline.</li>
+    <li>Glue the back of each strip's first panel onto the striped tab of the strip before it.</li>
+    <li>Fold back and forth at the tick marks like a fan. It closes to exactly 63 × 88 mm.</li></ol>`;
+  return `<b>Mini booklet</b>, ${pages} pages on ${sheets} ${paperName} sheet${sheets > 1 ? 's' : ''}, printed <b>double-sided</b>.
+    <ol><li>Print at <b>100% / Actual size</b>, double-sided, <b>flip on long edge</b>. Don't use "Fit to page".</li>
+    <li>Cut out each spread along the grey outline. Fronts and backs line up.</li>
+    <li>Fold each spread in half at the tick marks, printed side out.</li>
+    <li>Nest them in order (sheet 1 outermost), then staple or glue along the fold. It closes to exactly 63 × 88 mm.</li></ol>`;
+}
+/* ---------- Custom groups (used when Order is "By group") ---------- */
+function kwRow(e, withPicker) {
+  const row = document.createElement('div'); row.className = 'kwrow' + (withPicker ? ' picker' : '');
+  const id = 'kw-' + e.key.replace(/[^a-z0-9]+/g, '-');
+  const opts = state.groups.list.map(g => `<option value="${escHtml(g.id)}" ${g.id === groupOf(e) ? 'selected' : ''}>${escHtml(g.title)}</option>`).join('');
+  row.innerHTML = `<input type="checkbox" id="${id}" ${state.hidden[e.key] ? '' : 'checked'} aria-label="Include ${escHtml(e.name)}">
+    <details><summary>${escHtml(e.name)}</summary><textarea id="${id}-text" aria-label="Text for ${escHtml(e.name)}"></textarea></details>
+    ${withPicker ? `<select id="${id}-group" aria-label="Group for ${escHtml(e.name)}">${opts}</select>` : ''}
+    <span class="cnt">×${e.cards.size}</span>`;
+  const cb = row.querySelector('input'), ta = row.querySelector('textarea'), sel = row.querySelector('select');
+  ta.value = state.edits[e.key] ?? e.text;
+  cb.addEventListener('change', () => { if (cb.checked) delete state.hidden[e.key]; else state.hidden[e.key] = 1; save('kb-hidden-v1', state.hidden); render(); });
+  ta.addEventListener('input', () => { if (ta.value.trim() && ta.value !== e.text) state.edits[e.key] = ta.value; else delete state.edits[e.key]; save('kb-edits-v1', state.edits); scheduleRender(); });
+  if (sel) sel.addEventListener('change', () => {
+    if (sel.value === e.cat) delete state.groups.assign[e.key]; else state.groups.assign[e.key] = sel.value;
+    saveGroups(); renderKwList(); render();
+  });
+  return row;
+}
+function renderKwList() {
+  const host = $('#kwlist'); host.innerHTML = '';
+  if (order() === 'group') {
+    for (const g of state.groups.list) {
+      const list = state.entries.filter(e => groupOf(e) === g.id).sort((a, b) => a.name.localeCompare(b.name));
+      const h = document.createElement('div'); h.className = 'kwgroup';
+      h.textContent = g.title + (list.length ? '' : ' (empty)');
+      host.appendChild(h);
+      for (const e of list) host.appendChild(kwRow(e, true));
+    }
+  } else {
+    for (const e of [...state.entries].sort((a, b) => a.name.localeCompare(b.name))) host.appendChild(kwRow(e, false));
+  }
+}
+function renderGroups() {
+  $('#groupbox').hidden = order() !== 'group';
+  const host = $('#grouplist'); host.innerHTML = '';
+  const list = state.groups.list;
+  list.forEach((g, i) => {
+    const row = document.createElement('div'); row.className = 'grow';
+    row.innerHTML = `<input type="text" id="group-${escHtml(g.id)}" value="${escHtml(g.title)}" aria-label="Group name">
+      <button type="button" class="mini" data-act="up" aria-label="Move ${escHtml(g.title)} up" ${i === 0 ? 'disabled' : ''}>↑</button>
+      <button type="button" class="mini" data-act="down" aria-label="Move ${escHtml(g.title)} down" ${i === list.length - 1 ? 'disabled' : ''}>↓</button>
+      <button type="button" class="mini" data-act="del" aria-label="Delete ${escHtml(g.title)}" ${list.length === 1 ? 'disabled' : ''}>✕</button>`;
+    const input = row.querySelector('input');
+    input.addEventListener('input', () => { g.title = input.value.trim() || 'Untitled'; saveGroups(); scheduleRender(); });
+    input.addEventListener('change', () => renderKwList());
+    row.addEventListener('click', ev => {
+      const act = ev.target.closest('button')?.dataset.act;
+      if (!act) return;
+      if (act === 'up' && i > 0) [list[i - 1], list[i]] = [list[i], list[i - 1]];
+      if (act === 'down' && i < list.length - 1) [list[i + 1], list[i]] = [list[i], list[i + 1]];
+      if (act === 'del' && list.length > 1) {
+        list.splice(i, 1);
+        for (const k in state.groups.assign) if (state.groups.assign[k] === g.id) delete state.groups.assign[k];
+      }
+      saveGroups(); renderGroups(); renderKwList(); render();
+    });
+    host.appendChild(row);
+  });
+}
+let renderTimer = 0;
+function scheduleRender() { clearTimeout(renderTimer); renderTimer = setTimeout(render, 250); }
+function render() {
+  if (!state.cards.length) return;
+  const mode = document.querySelector('input[name=mode]:checked').value;
+  const paper = document.querySelector('input[name=paper]:checked').value;
+  document.documentElement.style.setProperty('--pt', $('#size').value + 'pt');
+  applyFrame();
+  const pages = flow(mode);
+  const flat = $('#flat'); flat.innerHTML = '';
+  pages.forEach(p => flat.appendChild(p.cloneNode(true)));
+  impose(pages, mode, paper);
+  $('#measure').innerHTML = '';
+  $('#howto').innerHTML = howto(mode, paper, pages.length);
+  $('#paperbox').hidden = mode === 'image';
+  $('#tab-sheets').textContent = mode === 'image' ? 'Full image' : 'Print sheets';
+  $('#print').textContent = mode === 'image' ? 'Save image' : 'Print';
+}
+
+/* ---------- Image export ---------- */
+// The image sheet is drawn through an SVG <foreignObject>, so the browser renders the cards exactly as on screen.
+// An SVG drawn as an image can't load anything itself, so fonts and pictures are inlined as data URLs first.
+const IMG_DPI = 400;
+const dataUrls = new Map();
+function toDataUrl(url) {
+  // Skip the HTTP cache: the copy the page's <img> tags loaded has no CORS header, so fetch would refuse it.
+  if (!dataUrls.has(url)) dataUrls.set(url, fetch(url, { cache: 'no-store' })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+    .then(b => new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(b); }))
+    .catch(err => { dataUrls.delete(url); throw err; }));
+  return dataUrls.get(url);
+}
+async function fontCss() {
+  try {
+    const css = await (await fetch($('link[href*="fonts.googleapis.com/css2"]').href)).text();
+    // Keep only the latin subsets; the cards don't use the others.
+    const blocks = css.split(/(?=\/\* )/);
+    let out = blocks.some(b => /^\/\* latin/.test(b)) ? blocks.filter(b => /^\/\* latin(-ext)? \*\//.test(b)).join('') : css;
+    for (const u of new Set(out.match(/https:\/\/[^)'"\s]+/g) || [])) out = out.split(u).join(await toDataUrl(u));
+    return out;
+  } catch { return ''; }
+}
+function loadImage(src) {
+  return new Promise((ok, no) => { const img = new Image(); img.onload = () => ok(img); img.onerror = () => no(new Error('render')); img.src = src; });
+}
+async function saveImage() {
+  const src = $('#sheets .imgsheet');
+  if (!src) return;
+  const btn = $('#print'); btn.disabled = true;
+  setStatus('Making the image…');
+  try {
+    const sheet = src.cloneNode(true);
+    sheet.style.boxShadow = 'none';
+    await Promise.all([...sheet.querySelectorAll('img')].map(async img => {
+      try { img.setAttribute('src', await toDataUrl(img.src)); }
+      catch { if (img.classList.contains('mi')) img.outerHTML = symFallback(img.dataset.sym); else img.remove(); }
+    }));
+    const pxW = Math.ceil(sheet.dataset.w * 96 / 25.4), pxH = Math.ceil(sheet.dataset.h * 96 / 25.4);
+    const root = document.createElement('div');
+    root.setAttribute('style', document.documentElement.style.cssText + `;width:${pxW}px;height:${pxH}px`);
+    const style = document.createElement('style');
+    style.textContent = (await fontCss()) + [...document.querySelectorAll('style:not(#page-style)')].map(s => s.textContent).join('\n');
+    root.append(style, sheet);
+    const xhtml = new XMLSerializer().serializeToString(root);
+    // Very large canvases fail in some browsers, so step down the resolution until one works.
+    let blob = null, dpi = 0;
+    for (dpi of [IMG_DPI, 300, 200, 150]) {
+      const cw = Math.round(pxW * dpi / 96), ch = Math.round(pxH * dpi / 96);
+      if (Math.max(cw, ch) > 16000 || cw * ch > 100e6) continue;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${cw}" height="${ch}" viewBox="0 0 ${pxW} ${pxH}"><foreignObject x="0" y="0" width="${pxW}" height="${pxH}">${xhtml}</foreignObject></svg>`;
+      try {
+        const img = await loadImage('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
+        const canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
+        canvas.getContext('2d').drawImage(img, 0, 0, cw, ch);
+        blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      } catch { blob = null; }
+      if (blob) break;
+    }
+    if (!blob) throw new Error('too big');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = deckTitle().replace(/[\\/:*?"<>|]+/g, '').trim() + ' keywords.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    setStatus(`Saved the image (${dpi} dpi, ${(blob.size / 1048576).toFixed(1)} MB). Check your Downloads folder.`);
+  } catch {
+    setStatus("Couldn't make the image in this browser. Try Chrome, Edge or Firefox, or untick some keywords to make it smaller.", true);
+  } finally { btn.disabled = false; }
+}
+function setStatus(msg, err) { const s = $('#status'); s.textContent = msg; s.className = err ? 'err' : ''; }
+
+async function generate() {
+  const btn = $('#go'); btn.disabled = true;
+  try {
+    const list = parseDeck($('#deck').value);
+    if (!list.length) { setStatus('Paste a decklist first: one card per line, like "1 Sol Ring".', true); return; }
+    const { result, missing } = await fetchCards(list);
+    const seen = new Set(); state.cards = []; state.commanders = [];
+    for (const l of list) {
+      const c = result.get(l.front.toLowerCase());
+      if (!c) continue;
+      if (l.isCmd && !state.commanders.includes(c)) state.commanders.push(c);
+      if (!seen.has(c.name)) { seen.add(c.name); state.cards.push(c); }
+    }
+    state.total = list.filter(l => result.has(l.front.toLowerCase())).reduce((s, l) => s + l.qty, 0);
+    state.entries = analyze(state.cards);
+    renderKwList();
+    await fontsReady;
+    render();
+    const total = list.reduce((s, l) => s + l.qty, 0);
+    const n = state.entries.length;
+    setStatus(`Found ${n} keyword${n === 1 ? '' : 's'} in ${state.total} card${state.total === 1 ? '' : 's'}.` + (missing.length ? ` Couldn't find: ${missing.join(', ')}. Check the spelling.` : ''), missing.length > 0);
+  } catch (err) {
+    const blocked = err instanceof TypeError;
+    setStatus(blocked
+      ? "Your browser couldn't connect to Scryfall (api.scryfall.com), where the card text comes from. Check that you're online, then open this file directly in Chrome, Edge or Firefox. Previews inside other apps, and some ad or privacy blockers, stop the connection."
+      : "Scryfall couldn't answer right now (" + err.message + '). Wait a minute and click Make cheat sheet again.', true);
+  } finally { btn.disabled = false; }
+}
+
+const fontsReady = Promise.all([
+  document.fonts.load('700 10px Cinzel'), document.fonts.load('600 10px Cinzel'),
+  document.fonts.load('400 10px "Crimson Pro"'), document.fonts.load('italic 400 10px "Crimson Pro"'), document.fonts.load('700 10px "Crimson Pro"')
+]).catch(() => {}).then(() => document.fonts.ready);
+
+/* ---------- Wiring ---------- */
+const SAMPLE = `Commander
+1 The Thirteenth Doctor
+1 Yasmin Khan
+
+Deck
+1 Danny Pink
+1 Osgood, Operation Double
+1 Twice Upon a Time // Unlikely Meeting
+1 Become the Pilot
+1 Quantum Misalignment
+1 Nardole, Resourceful Cyborg
+1 Flatline
+1 Bill Potts
+1 Into the Time Vortex
+1 Dan Lewis
+1 Flaming Tyrannosaurus
+1 Ryan Sinclair
+1 Return the Past
+1 Impending Flux
+1 The Flux
+1 Sisterhood of Karn
+1 Graham O'Brien
+1 Karvanista, Loyal Lupari // Lupari Shield
+1 The Foretold Soldier
+1 Fugitive of the Judoon
+1 River Song
+1 Madame Vastra
+1 Jenny Flint
+1 Strax, Sontaran Nurse
+1 The Twelfth Doctor
+1 The Fugitive Doctor
+1 Me, the Immortal
+1 Frost Fair Lure Fish
+1 Lunar Hatchling
+1 Heaven Sent
+1 Last Night Together
+1 River Song's Diary
+1 Confession Dial
+1 Clara Oswald
+1 Chaos Warp
+1 Cursed Mirror
+1 Carpet of Flowers
+1 Psychic Paper
+1 TARDIS
+1 Sonic Screwdriver
+1 Start the TARDIS
+1 Surge of Brilliance
+1 Iraxxa, Empress of Mars
+1 Memory Worm
+1 Decaying Time Loop
+1 Thijarian Witness
+1 Truth or Consequences
+1 Bigger on the Inside
+1 Wreck and Rebuild
+1 Arcane Signet
+1 Sol Ring
+1 Ponder
+1 Think Twice
+1 Preordain
+1 Throes of Chaos
+1 Cultivate
+1 Search for Tomorrow
+1 Farseek
+1 Beast Within
+1 Growth Spiral
+1 Talisman of Curiosity
+1 Talisman of Impulse
+1 Dreamroot Cascade
+1 Temple of Mystery
+1 Vineglimmer Snarl
+1 Waterlogged Grove
+1 Desolate Lighthouse
+1 Rockfall Vale
+1 Rootbound Crag
+1 Temple of Abandon
+1 Cinder Glade
+1 Sheltered Thicket
+1 Temple of Epiphany
+1 Frostboil Snarl
+1 Stormcarved Coast
+1 Fiery Islet
+1 Game Trail
+1 Exotic Orchard
+1 Gallifrey Council Chamber
+1 Rogue's Passage
+1 Frontier Bivouac
+1 Reliquary Tower
+1 Myriad Landscape
+1 Temple of the False God
+1 Path of Ancestry
+1 Command Tower
+1 Ominous Cemetery
+4 Island
+3 Mountain
+4 Forest`;
+
+const prefs = load('kb-prefs-v1', null);
+$('#deck').value = load('kb-deck-v1', null) || SAMPLE;
+if (prefs) {
+  if (prefs.mode) $('#mode-' + ({ cards: 'cards', booklet: 'book', image: 'img' }[prefs.mode] || 'acc')).checked = true;
+  if (prefs.paper) $('#paper-' + prefs.paper).checked = true;
+  if (prefs.order) $('#order-' + (prefs.order === 'az' ? 'az' : 'group')).checked = true;
+  if (prefs.size) $('#size').value = prefs.size;
+  $('#names').checked = !!prefs.names;
+  if (prefs.deckname) $('#deckname').value = prefs.deckname;
+}
+$('#sizeval').textContent = $('#size').value + ' pt';
+const savePrefs = () => save('kb-prefs-v1', {
+  mode: document.querySelector('input[name=mode]:checked').value,
+  paper: document.querySelector('input[name=paper]:checked').value,
+  order: order(),
+  size: $('#size').value, names: $('#names').checked, deckname: $('#deckname').value
+});
+document.querySelectorAll('input[name=mode], input[name=paper], input[name=order], #names').forEach(el => el.addEventListener('change', () => { savePrefs(); render(); }));
+$('#size').addEventListener('input', () => { $('#sizeval').textContent = $('#size').value + ' pt'; savePrefs(); scheduleRender(); });
+$('#deckname').addEventListener('input', () => { savePrefs(); scheduleRender(); });
+$('#deck').addEventListener('input', () => save('kb-deck-v1', $('#deck').value));
+$('#go').addEventListener('click', generate);
+document.querySelectorAll('input[name=order]').forEach(el => el.addEventListener('change', () => { renderGroups(); renderKwList(); }));
+$('#addgroup').addEventListener('submit', ev => {
+  ev.preventDefault();
+  const title = $('#newgroup').value.trim();
+  if (!title) { $('#newgroup').focus(); return; }
+  state.groups.list.push({ id: 'g' + Date.now().toString(36), title });
+  $('#newgroup').value = '';
+  saveGroups(); renderGroups(); renderKwList(); render();
+});
+$('#resetgroups').addEventListener('click', () => {
+  state.groups = defaultGroups();
+  saveGroups(); renderGroups(); renderKwList(); render();
+  setStatus('Groups reset to the defaults.');
+});
+renderGroups();
+$('#print').addEventListener('click', () => document.querySelector('input[name=mode]:checked').value === 'image' ? saveImage() : window.print());
+function selectTab(which) {
+  $('#tab-flat').setAttribute('aria-selected', which === 'flat');
+  $('#tab-sheets').setAttribute('aria-selected', which === 'sheets');
+  $('#flat').hidden = which !== 'flat';
+  $('#sheets').hidden = which !== 'sheets';
+}
+$('#tab-flat').addEventListener('click', () => selectTab('flat'));
+$('#tab-sheets').addEventListener('click', () => selectTab('sheets'));
+
+generate();
+</script>
+</body>
+</html>
